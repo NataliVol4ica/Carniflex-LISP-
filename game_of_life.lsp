@@ -2,10 +2,43 @@
 	(ql:quickload "lispbuilder-sdl")
 )
 
+(defvar *window-w* 1024)
+(defvar *window-h* 768)
+
+(defvar *cur-cellsize* 20)
+(defvar *grid-width*)
+(defvar *grid-height*)
+(defvar *field-x* 0) ;move the upper left corner of grid
+(defvar *field-y* 0)
+
+(defun draw_grid ()
+	(loop for i from 0 to *grid-width* by 1 do
+		(sdl:draw-line-* (* *cur-cellsize* i)
+					0
+					(* *cur-cellsize* i)
+					(* *cur-cellsize* *grid-height*)
+					:color (sdl:color :r 200 :g 200 :b 200))
+	)
+	(loop for i from 0 to *grid-height* by 1 do
+		(sdl:draw-line-* 0
+					(* *cur-cellsize* i)
+					(* *cur-cellsize* *grid-width*)
+					(* *cur-cellsize* i)
+					:color (sdl:color :r 200 :g 200 :b 200))
+	)
+)
+
 ;;rendering
+(defun render ()
+	(sdl:clear-display (sdl:color))
+	(draw_grid)
+	(sdl:update-display)
+)
+
+;;main thread
 (defun draw ()
 	(sdl:with-init ()
-		(sdl:window 1024 768 :title-caption "Game of Life")
+		(sdl:window *window-w* *window-h* :title-caption "Game of Life")
 		(sdl:with-events ()
 			(:quit-event ()
 				(format t "~%Quitting the program.~%")
@@ -19,6 +52,7 @@
 				)
 			)
 			(:idle ()
+				(render)
 			)
 		)
 
@@ -35,12 +69,25 @@
 	(exit)
 )
 
+;;input error
+(defun inp-err(fname val)
+	(format t "[ERROR]Invalid ~a: \"~a\"~%" fname val)
+	(exit)
+)
+
 ;;main
 (defun main(args)
 	(if (null args) (print-usage))
-	(princ (first args))
+	;checking for help flag
 	(if	(or (string= "-h" (first args)) (string= "--help" (first args)))
-		(print-usage)
+		(print-usage))
+	;getting width
+	(setf *grid-width*
+		(or (parse-integer (first args) :junk-allowed t) (or (inp-err "width" (first args)) 0))
+	)
+	;getting height
+	(setf *grid-height*
+		(or (parse-integer (first (rest args)) :junk-allowed t) (or (inp-err "height" (first (rest args))) 0))
 	)
 	(draw)
 )

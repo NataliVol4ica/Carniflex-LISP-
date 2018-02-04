@@ -13,28 +13,83 @@
 (defvar *drag-mode* nil)
 (defvar *grid*)
 (defvar *todraw-grid* T)
-(defvar *fps* 64)
+(defvar *fps* 2)
+(defvar *ispaused* T)
+
 ;;         ================== CELL CALCULATIONS =================
 (defun alife-cell (x y)
 	(setf (aref *grid* y x) (- 1 (aref *grid* y x)))
-	(format t "~a~%" *grid*))
+	;(format t "~a~%" *grid*)
+)
 
 (defun create_grid ()
 	(setq *grid* (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
+	;(dotimes (i (+ *grid-height* 2))
+	;	(setf (aref *grid* i 0) (- 1))
+	;	(setf (aref *grid* i (+ 1 *grid-width*)) (- 1))
+	;)
+	;(dotimes (i (+ *grid-width* 2))
+	;	(setf (aref *grid* 0 i) (- 1))
+	;	(setf (aref *grid* (+ 1 *grid-height*) i) (- 1))
+	;)
 	(dotimes (i (+ *grid-height* 2))
-		(setf (aref *grid* i 0) (- 1))
-		(setf (aref *grid* i (+ 1 *grid-width*)) (- 1))
+		(dotimes (j (+ *grid-width* 2))
+			(setf (aref *grid* i j) 0)
+			)
 	)
-	(dotimes (i (+ *grid-width* 2))
-		(setf (aref *grid* 0 i) (- 1))
-		(setf (aref *grid* (+ 1 *grid-height*) i) (- 1))
+	(format t "~a~%" *grid*)
+)
+
+(defun count_neighbours (x y)
+	(let (ans)
+		(setq ans 0)
+		(if (eq (aref *grid* (- x 1)	(- y 1))	1) (incf ans))
+		(if (eq (aref *grid* x 			(- y 1))	1) (incf ans))
+		(if (eq (aref *grid* (+ x 1) 	(- y 1))	1) (incf ans))
+		(if (eq (aref *grid* (- x 1)		y)		1) (incf ans))
+		(if (eq (aref *grid* (+ x 1)		y)		1) (incf ans))
+		(if (eq (aref *grid* (- x 1)	(+ y 1))	1) (incf ans))
+		(if (eq (aref *grid* x			(+ y 1))	1) (incf ans))
+		(if (eq (aref *grid* (+ x 1)	(+ y 1))	1) (incf ans))
+		(format t "~a ~a : ~a~%"x y ans)
+		ans
 	)
-	(dotimes (i *grid-height*)
-	   (dotimes (j *grid-width*)
-	      (setf (aref *grid* (+ i 1) (+ j 1)) 0)
-	   )
+)
+
+(defun live_or_die (x y)
+	(if (eq y 1)
+		(if (or (< x 2) (> x 3))
+			0
+			1
+		)
+		(if (eq x 3)
+			1
+			0
+		)
 	)
-	(format t "~a~%" *grid*))
+)
+
+(defun calc_life ()
+	(let (new temp)
+		(format t "Grid was~%~a~%" *grid*)
+		(setq new (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
+		(dotimes (i (+ *grid-height* 2))
+			(dotimes (j (+ *grid-width* 2))
+				(setf (aref new i j) 0)))
+		(dotimes (i *grid-height*)
+			(dotimes (j *grid-width*)
+				(setf temp (count_neighbours (+ i 1) (+ j 1)));(aref *grid* (+ i 1) (+ j 1)) 0)
+				(setf (aref new (+ i 1) (+ j 1)) (live_or_die temp (aref *grid* (+ i 1) (+ j 1))))
+			)
+		)
+		(dotimes (i (+ *grid-height* 2))
+			(dotimes (j (+ *grid-width* 2))
+				(setf (aref *grid* i j) (aref new i j))
+			)
+		)
+		(format t "Grid became~%~a~%" *grid*)
+	)
+)
 
 (defun define_cell_by_coords(xx yy)
 	(let (x y)
@@ -74,20 +129,20 @@
 (defun draw_cells ()
 	(let (temp)
 		(dotimes (i *grid-height*)
-		   (dotimes (j *grid-width*)
-	    		(setq temp (aref *grid* (+ i 1) (+ j 1)))
-	    		(case temp
-	    			(1
-	    				(sdl:draw-box-*
-	    					(+ *field-x* (* j *cur-cellsize*))
-	    					(+ *field-y* (* i *cur-cellsize*))
-	    					(- *cur-cellsize* 1)
-	    					(- *cur-cellsize* 1)
-	    					:color (sdl:color :r 255 :g 255 :b 255)
-	    				)
-	    			)
-	    		)
-	    	)
+			(dotimes (j *grid-width*)
+				(setq temp (aref *grid* (+ i 1) (+ j 1)))
+				(case temp
+					(1
+						(sdl:draw-box-*
+							(+ *field-x* (* j *cur-cellsize*))
+							(+ *field-y* (* i *cur-cellsize*))
+							(- *cur-cellsize* 1)
+							(- *cur-cellsize* 1)
+							:color (sdl:color :r 255 :g 255 :b 255)
+						)
+					)
+				)
+			)
 		)
 	))
 
@@ -98,16 +153,13 @@
 
 ;;rendering
 (defun render ()
+	(if *ispaused* t (calc_life))
 	(sdl:clear-display (sdl:color))
 	(if *todraw-grid* (draw_grid))
 	(draw_cells)
-	(sdl:update-display)
-)
+	(sdl:update-display))
 
-(defun set_fps()
-	(setf (sdl:frame-rate) *fps*))
-
-;;              ======== ZOOMING ========
+;;             ======== ZOOMING ========
 (defun zoom-in ()
 	(if (< *cur-cellsize* 256)
 		(progn
@@ -136,6 +188,11 @@
 			)
 		)
 	))
+
+;;			========== FRAMERATE ==========
+
+(defun set_fps()
+	(setf (sdl:frame-rate) *fps*))
 
 ;;         ============== MAIN THREAD ============
 (defun draw ()
@@ -170,6 +227,9 @@
 				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-p
+						(setq *ispaused* (not *ispaused*))
+						(format t "pause: ~a~%" *ispaused*))
 					(:sdl-key-period
 						(if (< *fps* 8192) (setf *fps* (* *fps* 2)))
 						(format t "framerate is now ~a~%" *fps*)

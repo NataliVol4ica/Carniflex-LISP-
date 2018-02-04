@@ -18,27 +18,18 @@
 (defvar *shift-pressed* nil)
 
 ;;         ================== CELL CALCULATIONS =================
+
 (defun alife-cell (x y)
 	(setf (aref *grid* y x) (- 1 (aref *grid* y x)))
-	;(format t "~a~%" *grid*)
 )
 
 (defun create_grid ()
 	(setq *grid* (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
-	;(dotimes (i (+ *grid-height* 2))
-	;	(setf (aref *grid* i 0) (- 1))
-	;	(setf (aref *grid* i (+ 1 *grid-width*)) (- 1))
-	;)
-	;(dotimes (i (+ *grid-width* 2))
-	;	(setf (aref *grid* 0 i) (- 1))
-	;	(setf (aref *grid* (+ 1 *grid-height*) i) (- 1))
-	;)
 	(dotimes (i (+ *grid-height* 2))
 		(dotimes (j (+ *grid-width* 2))
 			(setf (aref *grid* i j) 0)
 			)
 	)
-	;(format t "~a~%" *grid*)
 )
 
 (defun count_neighbours (x y)
@@ -52,7 +43,6 @@
 		(if (eq (aref *grid* (- x 1)	(+ y 1))	1) (incf ans))
 		(if (eq (aref *grid* x			(+ y 1))	1) (incf ans))
 		(if (eq (aref *grid* (+ x 1)	(+ y 1))	1) (incf ans))
-		;(format t "~a ~a : ~a~%"x y ans)
 		ans
 	)
 )
@@ -60,19 +50,18 @@
 (defun live_or_die (x y)
 	(if (eq y 1)
 		(if (or (< x 2) (> x 3))
-			0
+			100
 			1
 		)
 		(if (eq x 3)
 			1
-			0
+			y
 		)
 	)
 )
 
 (defun calc_life ()
 	(let (new temp)
-		;(format t "Grid was~%~a~%" *grid*)
 		(setq new (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
 		(dotimes (i (+ *grid-height* 2))
 			(dotimes (j (+ *grid-width* 2))
@@ -88,21 +77,17 @@
 				(setf (aref *grid* i j) (aref new i j))
 			)
 		)
-		;(format t "Grid became~%~a~%" *grid*)
 	)
 )
 
 (defun define_cell_by_coords(xx yy)
 	(let (x y)
-		;(format t "fx ~a fy ~a x ~a y ~a~%" *field-x* *field-y* xx yy)
 		(setq xx (- xx *field-x*))
 		(setq yy (- yy *field-y*)) ;нормирование сетки до (0, 0)
-		;; if x < 0 || x > grid-width * cellsize
 		(setq x (truncate (/ xx *cur-cellsize*)))
 		(setq y (truncate (/ yy *cur-cellsize*))) ;деление на размер клетки до индексов
 		(if (< xx 0) t (incf x))
 		(if (< yy 0) t (incf y)) ;бо отрицательные округляются до большего
-		;(format t "Clicked on [~a ~a]~%" x y)
 		(if (and
 			(and (> x 0) (< x (+ 1 *grid-width*)))
 			(and (> y 0) (< y (+ 1 *grid-height*))))
@@ -128,24 +113,34 @@
 	))
 
 (defun draw_cells ()
-	(let (temp)
+	(let (temp col)
 		(dotimes (i *grid-height*)
 			(dotimes (j *grid-width*)
 				(setq temp (aref *grid* (+ i 1) (+ j 1)))
-				(case temp
-					(1
-						(sdl:draw-box-*
-							(+ *field-x* (* j *cur-cellsize*))
-							(+ *field-y* (* i *cur-cellsize*))
-							(- *cur-cellsize* 1)
-							(- *cur-cellsize* 1)
-							:color (sdl:color :r 255 :g 255 :b 255)
+				(if (eq temp 1)
+					(setq col (sdl:color :r 255 :g 255 :b 255))
+					(progn
+						(setq col (sdl:color :r temp :g temp :b temp))
+						(if (eq temp 0) t
+							(setf (aref *grid* (+ i 1) (+ j 1)) (- temp 2))
 						)
 					)
 				)
+				;;(case temp
+				;;	(1 (setq col (sdl:color :r 255 :g 255 :b 255)))
+				;;	(2 (setq col (sdl:color :r 100 :g 100 :b 100)))
+				;;)
+				(if (> temp 0)
+					(sdl:draw-box-*
+						(+ *field-x* (* j *cur-cellsize*))
+						(+ *field-y* (* i *cur-cellsize*))
+						(- *cur-cellsize* 1)
+						(- *cur-cellsize* 1)
+						:color col))
 			)
 		)
-	))
+	)
+)
 
 (defun centre_grid ()
 	(setf *field-x* (- (/ *window-w* 2) (/ (* *grid-width* *cur-cellsize*) 2)))
@@ -206,6 +201,15 @@
 	(set_fps)
 )
 
+(defun my-restart ()
+	(setq *ispaused* T)
+	(dotimes (i (+ *grid-height* 2))
+		(dotimes (j (+ *grid-width* 2))
+			(setf (aref *grid* i j) 0)
+			)
+	)
+)
+
 ;;         ============== MAIN THREAD ============
 (defun draw ()
 	(sdl:with-init ()
@@ -243,6 +247,8 @@
 				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-r
+						(my-restart))
 					(:sdl-key-lshift
 						(format t "shift pressed~%")
 						(setq *shift-pressed* T))

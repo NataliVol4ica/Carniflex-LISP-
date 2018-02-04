@@ -80,14 +80,28 @@
 	)
 )
 
+(defun get-x-by-coord(xx)
+	(let (x)
+		(setq xx (- xx *field-x*))
+		(setq x (truncate (/ xx *cur-cellsize*)))
+		(if (< xx 0) t (incf x))
+		x
+	)
+)
+
+(defun get-y-by-coord(yy)
+	(let (y)
+		(setq yy (- yy *field-y*)) ;нормирование сетки до (0, 0)
+		(setq y (truncate (/ yy *cur-cellsize*))) ;деление на размер клетки до индексов
+		(if (< yy 0) t (incf y)) ;бо отрицательные округляются до большего
+		y
+	)
+)
+
 (defun define_cell_by_coords(xx yy)
 	(let (x y)
-		(setq xx (- xx *field-x*))
-		(setq yy (- yy *field-y*)) ;нормирование сетки до (0, 0)
-		(setq x (truncate (/ xx *cur-cellsize*)))
-		(setq y (truncate (/ yy *cur-cellsize*))) ;деление на размер клетки до индексов
-		(if (< xx 0) t (incf x))
-		(if (< yy 0) t (incf y)) ;бо отрицательные округляются до большего
+		(setq x (get-x-by-coord xx))
+		(setq y (get-y-by-coord yy))
 		(if (and
 			(and (> x 0) (< x (+ 1 *grid-width*)))
 			(and (> y 0) (< y (+ 1 *grid-height*))))
@@ -126,14 +140,10 @@
 						)
 					)
 				)
-				;;(case temp
-				;;	(1 (setq col (sdl:color :r 255 :g 255 :b 255)))
-				;;	(2 (setq col (sdl:color :r 100 :g 100 :b 100)))
-				;;)
 				(if (> temp 0)
 					(sdl:draw-box-*
-						(+ *field-x* (* j *cur-cellsize*))
-						(+ *field-y* (* i *cur-cellsize*))
+						(+ (+ *field-x* (* j *cur-cellsize*)) 1)
+						(+ (+ *field-y* (* i *cur-cellsize*)) 1)
 						(- *cur-cellsize* 1)
 						(- *cur-cellsize* 1)
 						:color col))
@@ -210,6 +220,28 @@
 	)
 )
 
+;;        ============= PRESETS =============
+
+(defun preset-block (xx yy)
+	(let (x y)
+		(setq x (get-x-by-coord xx))
+		(setq y (get-y-by-coord yy))
+		(if (or
+				(or (< x 2) (> x *grid-width*))
+				(or (< y 2) (> y *grid-height*))
+			)
+			nil
+			(progn
+				(alife-cell x y)
+				(alife-cell (- x 1) y)
+				(alife-cell x (- y 1))
+				(alife-cell (- x 1) (- y 1))
+			)
+
+		)
+	)
+)
+
 ;;         ============== MAIN THREAD ============
 (defun draw ()
 	(sdl:with-init ()
@@ -247,6 +279,8 @@
 				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-1
+						(preset-block (sdl:mouse-x) (sdl:mouse-y)))
 					(:sdl-key-r
 						(my-restart))
 					(:sdl-key-lshift
@@ -285,6 +319,7 @@
 					)
 					(:sdl-key-escape (sdl:push-quit-event))
 				)
+				(format t "pressed ~a~%" key)
 			)
 			(:key-up-event (:key key)
 				(case key

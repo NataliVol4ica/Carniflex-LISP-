@@ -15,6 +15,7 @@
 (defvar *todraw-grid* T)
 (defvar *fps* 128)
 (defvar *ispaused* T)
+(defvar *shift-pressed* nil)
 
 ;;         ================== CELL CALCULATIONS =================
 (defun alife-cell (x y)
@@ -191,13 +192,25 @@
 
 ;;			========== FRAMERATE ==========
 
-(defun set_fps()
+(defun set_fps ()
 	(setf (sdl:frame-rate) *fps*))
+
+(defun fps_inc ()
+	(if (< *fps* 8192) (setf *fps* (* *fps* 2)))
+	(format t "framerate is now ~a~%" *fps*)
+	(set_fps)
+)
+(defun fps_dec ()
+	(if (> *fps* 2) (setf *fps* (/ *fps* 2)))
+	(format t "framerate is now ~a~%" *fps*)
+	(set_fps)
+)
 
 ;;         ============== MAIN THREAD ============
 (defun draw ()
 	(sdl:with-init ()
-		(sdl:window *window-w* *window-h* :title-caption "Game of Life")
+		(sdl:window *window-w* *window-h* :title-caption "Game of Life" :resizable T)
+		(sdl:enable-key-repeat 1 1)
 		(set_fps)
 		(centre_grid)
 		(sdl:with-events ()
@@ -205,12 +218,15 @@
 				(format t "~%Quitting the program.~%")
 				(exit)
 				T)
+			(:sdl-video-resize-ewent (:w w :h h)
+				(setq *window-w* w)
+				(setq *window-h* h))
 			(:mouse-button-down-event (:button b :x x :y y)
 				(case b
-					(1 (define_cell_by_coords x y))
+					(1 (format t "click~%") (define_cell_by_coords x y))
 					(3 (setf *drag-mode* T))
-					(4 (zoom-in))
-					(5 (zoom-out))						
+					(4 (format t "wheel up~%") (if *shift-pressed* (fps_inc) (zoom-in)))
+					(5 (format t "wheel down~%") (if *shift-pressed* (fps_dec) (zoom-out)))						
 				))
 			(:mouse-button-up-event (:button b)
 				(if (eq b 3)
@@ -227,17 +243,16 @@
 				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-lshift
+						(format t "shift pressed~%")
+						(setq *shift-pressed* T))
 					(:sdl-key-p
 						(setq *ispaused* (not *ispaused*))
 						(format t "pause: ~a~%" *ispaused*))
 					(:sdl-key-period
-						(if (< *fps* 8192) (setf *fps* (* *fps* 2)))
-						(format t "framerate is now ~a~%" *fps*)
-						(set_fps))
+						(fps_inc))
 					(:sdl-key-comma
-						(if (> *fps* 2) (setf *fps* (/ *fps* 2)))
-						(format t "framerate is now ~a~%" *fps*)
-						(set_fps))
+						(fps_dec))
 					(:sdl-key-g
 						(setq *todraw-grid* (not *todraw-grid*)))
 					(:sdl-key-c
@@ -263,6 +278,13 @@
 							(setq *field-x* (+ *field-x* (/ *cur-cellsize* 2))))
 					)
 					(:sdl-key-escape (sdl:push-quit-event))
+				)
+			)
+			(:key-up-event (:key key)
+				(case key
+					(:sdl-key-lshift
+						(format t "shift released~%")
+						(setq *shift-pressed* nil))
 				)
 			)
 			(:idle ()

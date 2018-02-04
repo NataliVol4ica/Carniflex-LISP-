@@ -13,12 +13,11 @@
 (defvar *drag-mode* nil)
 (defvar *grid*)
 (defvar *todraw-grid* T)
-
+(defvar *fps* 64)
 ;;         ================== CELL CALCULATIONS =================
 (defun alife-cell (x y)
 	(setf (aref *grid* y x) (- 1 (aref *grid* y x)))
-	(format t "~a~%" *grid*)
-)
+	(format t "~a~%" *grid*))
 
 (defun create_grid ()
 	(setq *grid* (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
@@ -35,8 +34,7 @@
 	      (setf (aref *grid* (+ i 1) (+ j 1)) 0)
 	   )
 	)
-	(format t "~a~%" *grid*)
-)
+	(format t "~a~%" *grid*))
 
 (defun define_cell_by_coords(xx yy)
 	(let (x y)
@@ -54,8 +52,7 @@
 			(and (> y 0) (< y (+ 1 *grid-height*))))
 			(alife-cell x y)
 		)
-	)
-)
+	))
 
 ;;drawing grid
 (defun draw_grid ()
@@ -72,8 +69,7 @@
 					(+ (* *cur-cellsize* *grid-width*) *field-x*)
 					(+ (* *cur-cellsize* i) *field-y*)
 					:color (sdl:color :r 30 :g 30 :b 30))
-	)
-)
+	))
 
 (defun draw_cells ()
 	(let (temp)
@@ -93,8 +89,12 @@
 	    		)
 	    	)
 		)
-	)
-)
+	))
+
+(defun centre_grid ()
+	(setf *field-x* (- (/ *window-w* 2) (/ (* *grid-width* *cur-cellsize*) 2)))
+	(setf *field-y* (- (/ *window-h* 2) (/ (* *grid-height* *cur-cellsize*) 2)))
+) ; moving grid to the centre of window
 
 ;;rendering
 (defun render ()
@@ -103,6 +103,10 @@
 	(draw_cells)
 	(sdl:update-display)
 )
+
+(defun set_fps()
+	(setf (sdl:frame-rate) *fps*))
+
 ;;              ======== ZOOMING ========
 (defun zoom-in ()
 	(if (< *cur-cellsize* 256)
@@ -137,9 +141,8 @@
 (defun draw ()
 	(sdl:with-init ()
 		(sdl:window *window-w* *window-h* :title-caption "Game of Life")
-		(setf (sdl:frame-rate) 60)
-		(setf *field-x* (- (/ *window-w* 2) (/ (* *grid-width* *cur-cellsize*) 2)))
-		(setf *field-y* (- (/ *window-h* 2) (/ (* *grid-height* *cur-cellsize*) 2)))
+		(set_fps)
+		(centre_grid)
 		(sdl:with-events ()
 			(:quit-event ()
 				(format t "~%Quitting the program.~%")
@@ -167,8 +170,18 @@
 				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-period
+						(if (< *fps* 8192) (setf *fps* (* *fps* 2)))
+						(format t "framerate is now ~a~%" *fps*)
+						(set_fps))
+					(:sdl-key-comma
+						(if (> *fps* 2) (setf *fps* (/ *fps* 2)))
+						(format t "framerate is now ~a~%" *fps*)
+						(set_fps))
 					(:sdl-key-g
 						(setq *todraw-grid* (not *todraw-grid*)))
+					(:sdl-key-c
+						(centre_grid))
 					(:sdl-key-equals
 						(zoom-in))
 					(:sdl-key-minus

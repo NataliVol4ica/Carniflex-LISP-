@@ -1,4 +1,3 @@
-HOME = /Users/nkolosov
 
 all:
 	@make test1

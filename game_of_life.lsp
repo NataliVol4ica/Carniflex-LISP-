@@ -8,9 +8,49 @@
 (defvar *cur-cellsize* 16)
 (defvar *grid-width*)
 (defvar *grid-height*)
-(defvar *field-x* 0) ;move the upper left corner of grid
+(defvar *field-x* 0) ;the upper left corner of grid
 (defvar *field-y* 0)
 (defvar *drag-mode* nil)
+(defvar *grid*)
+
+;;         ================== CELL CALCULATIONS =================
+(defun alife-cell (x y)
+	(setf (aref *grid* y x) (- 1 (aref *grid* y x)))
+	(format t "~a~%" *grid*)
+)
+
+(defun create_grid ()
+	(setq *grid* (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
+	(dotimes (i (+ *grid-height* 2))
+		(setf (aref *grid* i 0) (- 1))
+		(setf (aref *grid* i (+ 1 *grid-width*)) (- 1))
+	)
+	(dotimes (i (+ *grid-width* 2))
+		(setf (aref *grid* 0 i) (- 1))
+		(setf (aref *grid* (+ 1 *grid-height*) i) (- 1))
+	)
+	(dotimes (i *grid-height*)
+	   (dotimes (j *grid-width*)
+	      (setf (aref *grid* (+ i 1) (+ j 1)) 0)
+	   )
+	)
+	(format t "~a~%" *grid*)
+)
+
+(defun define_cell_by_coords(xx yy)
+	(let (x y)
+		;(format t "fx ~a fy ~a x ~a y ~a~%" *field-x* *field-y* xx yy)
+		(setq xx (- xx *field-x*))
+		(setq yy (- yy *field-y*)) ;нормирование сетки до (0, 0)
+		;; if x < 0 || x > grid-width * cellsize
+		(setq x (truncate (/ xx *cur-cellsize*)))
+		(setq y (truncate (/ yy *cur-cellsize*))) ;деление на размер клетки до индексов
+		(if (< xx 0) t (incf x))
+		(if (< yy 0) t (incf y)) ;бо отрицательные округляются до большего
+		;(format t "Clicked on [~a ~a]~%" x y)
+		(alife-cell x y)
+	)
+)
 
 ;;drawing grid
 (defun draw_grid ()
@@ -19,16 +59,17 @@
 					(+ 0 *field-y*)
 					(+ (* *cur-cellsize* i) *field-x*)
 					(+ (* *cur-cellsize* *grid-height*) *field-y*)
-					:color (sdl:color :r 50 :g 50 :b 50))
+					:color (sdl:color :r 30 :g 30 :b 30))
 	)
 	(loop for i from 0 to *grid-height* by 1 do
 		(sdl:draw-line-* (+ 0 *field-x*)
 					(+ (* *cur-cellsize* i) *field-y*)
 					(+ (* *cur-cellsize* *grid-width*) *field-x*)
 					(+ (* *cur-cellsize* i) *field-y*)
-					:color (sdl:color :r 50 :g 50 :b 50))
+					:color (sdl:color :r 30 :g 30 :b 30))
 	)
 )
+
 
 ;;rendering
 (defun render ()
@@ -36,7 +77,7 @@
 	(draw_grid)
 	(sdl:update-display)
 )
-;;            ======== ZOOMING ========
+;;              ======== ZOOMING ========
 (defun zoom-in ()
 	(if (< *cur-cellsize* 256)
 		(progn
@@ -50,8 +91,7 @@
 				(setq *field-y* (+ (* (- *field-y* half) 2) half))
 			)
 		)
-	)
-)
+	))
 (defun zoom-out ()
 	(if (> *cur-cellsize* 2)
 		(progn
@@ -65,8 +105,7 @@
 				(setq *field-y* (truncate (+ (/ (- *field-y* half) 2) half)))
 			)
 		)
-	)
-)
+	))
 
 ;;         ============== MAIN THREAD ============
 (defun draw ()
@@ -81,8 +120,9 @@
 				(exit)
 				T
 			)
-			(:mouse-button-down-event (:button b)
+			(:mouse-button-down-event (:button b :x x :y y)
 				(case b
+					(1 (define_cell_by_coords x y))
 					(3 (setf *drag-mode* T))
 					(4 (zoom-in))
 					(5 (zoom-out))						
@@ -96,7 +136,6 @@
 			(:mouse-motion-event (:x-rel x-rel :y-rel y-rel)
 				(if *drag-mode*
 					(progn
-						;(format t "Mouse moving ~a ~a~%" x-rel y-rel)
 						(if (> (* *cur-cellsize* *grid-width*) *window-w*)
 							(setq *field-x* (+ *field-x* x-rel)))
 						(if (> (* *cur-cellsize* *grid-height*) *window-h*)
@@ -169,6 +208,9 @@
 	(setf *grid-height*
 		(or (parse-integer (first (rest args)) :junk-allowed t) (or (inp-err "height" (first (rest args))) 0))
 	)
+	(if (< *grid-width* 1) (inp-err "width" (first args)))
+	(if (< *grid-height* 1) (inp-err "height" (first args)))
+	(create_grid)
 	(draw)
 )
 

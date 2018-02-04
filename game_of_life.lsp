@@ -12,6 +12,7 @@
 (defvar *field-y* 0)
 (defvar *drag-mode* nil)
 (defvar *grid*)
+(defvar *todraw-grid* T)
 
 ;;         ================== CELL CALCULATIONS =================
 (defun alife-cell (x y)
@@ -98,7 +99,7 @@
 ;;rendering
 (defun render ()
 	(sdl:clear-display (sdl:color))
-	(draw_grid)
+	(if *todraw-grid* (draw_grid))
 	(draw_cells)
 	(sdl:update-display)
 )
@@ -143,21 +144,18 @@
 			(:quit-event ()
 				(format t "~%Quitting the program.~%")
 				(exit)
-				T
-			)
+				T)
 			(:mouse-button-down-event (:button b :x x :y y)
 				(case b
 					(1 (define_cell_by_coords x y))
 					(3 (setf *drag-mode* T))
 					(4 (zoom-in))
 					(5 (zoom-out))						
-				)
-			)
+				))
 			(:mouse-button-up-event (:button b)
 				(if (eq b 3)
 					(setf *drag-mode* nil)
-				)
-			)
+				))
 			(:mouse-motion-event (:x-rel x-rel :y-rel y-rel)
 				(if *drag-mode*
 					(progn
@@ -166,10 +164,11 @@
 						(if (> (* *cur-cellsize* *grid-height*) *window-h*)
 							(setq *field-y* (+ *field-y* y-rel)))
 					)
-				)
-			)
+				))
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-g
+						(setq *todraw-grid* (not *todraw-grid*)))
 					(:sdl-key-equals
 						(zoom-in))
 					(:sdl-key-minus

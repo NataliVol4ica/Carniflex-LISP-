@@ -48,7 +48,11 @@
 		(if (< xx 0) t (incf x))
 		(if (< yy 0) t (incf y)) ;бо отрицательные округляются до большего
 		;(format t "Clicked on [~a ~a]~%" x y)
-		(alife-cell x y)
+		(if (and
+			(and (> x 0) (< x (+ 1 *grid-width*)))
+			(and (> y 0) (< y (+ 1 *grid-height*))))
+			(alife-cell x y)
+		)
 	)
 )
 
@@ -70,11 +74,32 @@
 	)
 )
 
+(defun draw_cells ()
+	(let (temp)
+		(dotimes (i *grid-height*)
+		   (dotimes (j *grid-width*)
+	    		(setq temp (aref *grid* (+ i 1) (+ j 1)))
+	    		(case temp
+	    			(1
+	    				(sdl:draw-box-*
+	    					(+ *field-x* (* j *cur-cellsize*))
+	    					(+ *field-y* (* i *cur-cellsize*))
+	    					(- *cur-cellsize* 1)
+	    					(- *cur-cellsize* 1)
+	    					:color (sdl:color :r 255 :g 255 :b 255)
+	    				)
+	    			)
+	    		)
+	    	)
+		)
+	)
+)
 
 ;;rendering
 (defun render ()
 	(sdl:clear-display (sdl:color))
 	(draw_grid)
+	(draw_cells)
 	(sdl:update-display)
 )
 ;;              ======== ZOOMING ========

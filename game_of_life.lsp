@@ -1,7 +1,7 @@
  (let* ((*standard-output* (make-broadcast-stream)) (*error-output* *standard-output*))
 	(ql:quickload "lispbuilder-sdl")
 )
-
+;;global vars
 (defvar *window-w* 1024)
 (defvar *window-h* 768)
 
@@ -11,19 +11,20 @@
 (defvar *field-x* 0) ;move the upper left corner of grid
 (defvar *field-y* 0)
 
+;;drawing grid
 (defun draw_grid ()
 	(loop for i from 0 to *grid-width* by 1 do
-		(sdl:draw-line-* (* *cur-cellsize* i)
-					0
-					(* *cur-cellsize* i)
-					(* *cur-cellsize* *grid-height*)
+		(sdl:draw-line-* (+ (* *cur-cellsize* i) *field-x*)
+					(+ 0 *field-y*)
+					(+ (* *cur-cellsize* i) *field-x*)
+					(+ (* *cur-cellsize* *grid-height*) *field-y*)
 					:color (sdl:color :r 200 :g 200 :b 200))
 	)
 	(loop for i from 0 to *grid-height* by 1 do
-		(sdl:draw-line-* 0
-					(* *cur-cellsize* i)
-					(* *cur-cellsize* *grid-width*)
-					(* *cur-cellsize* i)
+		(sdl:draw-line-* (+ 0 *field-x*)
+					(+ (* *cur-cellsize* i) *field-y*)
+					(+ (* *cur-cellsize* *grid-width*) *field-x*)
+					(+ (* *cur-cellsize* i) *field-y*)
 					:color (sdl:color :r 200 :g 200 :b 200))
 	)
 )
@@ -47,7 +48,28 @@
 			)
 			(:key-down-event (:key key)
 				(case key
-					(:sdl-key-q (princ "pressed Q"))
+					(:sdl-key-w
+						(setq *field-y* (- *field-y* (/ *cur-cellsize* 2)))
+						(if (< *field-y* 0) (setq *field-y* 0))
+					)
+					(:sdl-key-a
+						(setq *field-x* (- *field-x* (/ *cur-cellsize* 2)))
+						(if (< *field-x* 0) (setq *field-x* 0))
+					)
+					(:sdl-key-s
+						(setq *field-y* (+ *field-y* (/ *cur-cellsize* 2)))
+						(let (temp)
+							(setq temp (- *window-h* (* *cur-cellsize* *grid-height*)))
+							(if (> *field-y* temp) (setq *field-y* (decf temp)))
+						)
+					)
+					(:sdl-key-d
+						(setq *field-x* (+ *field-x* (/ *cur-cellsize* 2)))
+						(let (temp)
+							(setq temp (- *window-w* (* *cur-cellsize* *grid-width*)))
+							(if (> *field-x* temp) (setq *field-x* (decf temp)))
+						)
+					)
 					(:sdl-key-escape (sdl:push-quit-event))
 				)
 			)
@@ -58,6 +80,8 @@
 
 	)
 )
+
+;;; ======= input maintaining =======
 
 ;;usage
 (defun print-usage ()

@@ -16,6 +16,7 @@
 (defvar *fps* 128)
 (defvar *ispaused* T)
 (defvar *shift-pressed* nil)
+(defvar *rotation* 1)
 
 ;;         ================== CELL CALCULATIONS =================
 
@@ -242,6 +243,151 @@
 	)
 )
 
+(defun preset-glider (xx yy)
+	(let (x y)
+		(setq x (get-x-by-coord xx))
+		(setq y (get-y-by-coord yy))
+		(if (or
+				(or (< x 3) (> x *grid-width*))
+				(or (< y 3) (> y *grid-height*))
+			)
+			nil
+			(case *rotation*
+				(1
+					(alife-cell x y)
+					(alife-cell (- x 1) y)
+					(alife-cell (- x 2) y)
+					(alife-cell x (- y 1))
+					(alife-cell (- x 1) (- y 2))
+				)
+				(2
+					(alife-cell (- x 1) y)
+					(alife-cell (- x 2) y)
+					(alife-cell x (- y 1))
+					(alife-cell (- x 2) (- y 1))
+					(alife-cell (- x 2) (- y 2))
+				)
+				(3
+					(alife-cell (- x 1) y)
+					(alife-cell (- x 2) (- y 1))
+					(alife-cell x (- y 2))
+					(alife-cell (- x 1) (- y 2))
+					(alife-cell (- x 2) (- y 2))
+				)
+				(4
+					(alife-cell x y)
+					(alife-cell x (- y 1))
+					(alife-cell x (- y 2))
+					(alife-cell (- x 1) (- y 2))
+					(alife-cell (- x 2) (- y 1))
+				)
+			)
+
+		)
+	)
+)
+
+(defun preset-gun (xx yy)
+	(let (x y)
+		(setq x (get-x-by-coord xx))
+		(setq y (get-y-by-coord yy))
+		(if (or
+				(or (< x 36) (> x *grid-width*))
+				(or (< y 9) (> y *grid-height*))
+			)
+			nil
+			(if (evenp *rotation*)
+			(progn
+				(alife-cell (- x (- 35 0)) (- y 5))
+				(alife-cell (- x (- 35 0)) (- y 6))
+				(alife-cell (- x (- 35 1)) (- y 5))
+				(alife-cell (- x (- 35 1)) (- y 6))
+				(alife-cell (- x (- 35 34))  (- y 3))
+				(alife-cell (- x (- 35 34))  (- y 4))
+				(alife-cell (- x (- 35 35))  (- y 3))
+				(alife-cell (- x (- 35 35))  (- y 4))
+				(alife-cell (- x (- 35 11))  (- y 8))
+				(alife-cell (- x (- 35 11))  (- y 7))
+				(alife-cell (- x (- 35 13))  (- y 7))
+				(alife-cell (- x (- 35 14))  (- y 6))
+				(alife-cell (- x (- 35 15))  (- y 6))
+				(alife-cell (- x (- 35 14))  (- y 5))
+				(alife-cell (- x (- 35 15))  (- y 5))
+				(alife-cell (- x (- 35 14))  (- y 4))
+				(alife-cell (- x (- 35 15))  (- y 4))
+				(alife-cell (- x (- 35 13))  (- y 3))
+				(alife-cell (- x (- 35 11))  (- y 3))
+				(alife-cell (- x (- 35 11))  (- y 2))
+				(alife-cell (- x (- 35 18))  (- y 3))
+				(alife-cell (- x (- 35 19))  (- y 4))
+				(alife-cell (- x (- 35 19))  (- y 3))
+				(alife-cell (- x (- 35 19))  (- y 2))
+				(alife-cell (- x (- 35 20))  (- y 1))
+				(alife-cell (- x (- 35 20))  (- y 5))
+				(alife-cell (- x (- 35 21))  (- y 3))
+				(alife-cell (- x (- 35 22))  (- y 0))
+				(alife-cell (- x (- 35 22))  (- y 6))
+				(alife-cell (- x (- 35 23))  (- y 0))
+				(alife-cell (- x (- 35 23))  (- y 6))
+				(alife-cell (- x (- 35 24))  (- y 1))
+				(alife-cell (- x (- 35 24))  (- y 5))
+				(alife-cell (- x (- 35 25))  (- y 2))
+				(alife-cell (- x (- 35 25))  (- y 3))
+				(alife-cell (- x (- 35 25))  (- y 4))
+			)
+			;;else
+			(progn
+				(alife-cell x (- y 5))
+				(alife-cell x (- y 6))
+				(alife-cell (- x 1) (- y 5))
+				(alife-cell (- x 1) (- y 6))
+
+				(alife-cell (- x 34)  (- y 3))
+				(alife-cell (- x 34)  (- y 4))
+				(alife-cell (- x 35)  (- y 3))
+				(alife-cell (- x 35)  (- y 4))
+
+
+				(alife-cell (- x 11)  (- y 8))
+				(alife-cell (- x 11)  (- y 7))
+				(alife-cell (- x 13)  (- y 7))
+
+				(alife-cell (- x 14)  (- y 6))
+				(alife-cell (- x 15)  (- y 6))
+				(alife-cell (- x 14)  (- y 5))
+				(alife-cell (- x 15)  (- y 5))
+				(alife-cell (- x 14)  (- y 4))
+				(alife-cell (- x 15)  (- y 4))
+
+				(alife-cell (- x 13)  (- y 3))
+				(alife-cell (- x 11)  (- y 3))
+				(alife-cell (- x 11)  (- y 2))
+
+				(alife-cell (- x 18)  (- y 3))
+				(alife-cell (- x 19)  (- y 4))
+				(alife-cell (- x 19)  (- y 3))
+				(alife-cell (- x 19)  (- y 2))
+
+				(alife-cell (- x 20)  (- y 1))
+				(alife-cell (- x 20)  (- y 5))
+
+				(alife-cell (- x 21)  (- y 3))
+
+				(alife-cell (- x 22)  (- y 0))
+				(alife-cell (- x 22)  (- y 6))
+				(alife-cell (- x 23)  (- y 0))
+				(alife-cell (- x 23)  (- y 6))
+				(alife-cell (- x 24)  (- y 1))
+				(alife-cell (- x 24)  (- y 5))
+				(alife-cell (- x 25)  (- y 2))
+				(alife-cell (- x 25)  (- y 3))
+				(alife-cell (- x 25)  (- y 4))
+			)
+		)
+		)
+	)
+)
+
 ;;         ============== MAIN THREAD ============
 (defun draw ()
 	(sdl:with-init ()
@@ -281,6 +427,15 @@
 				(case key
 					(:sdl-key-1
 						(preset-block (sdl:mouse-x) (sdl:mouse-y)))
+					(:sdl-key-2
+						(preset-glider (sdl:mouse-x) (sdl:mouse-y)))
+					(:sdl-key-3
+						(preset-gun (sdl:mouse-x) (sdl:mouse-y)))
+					(:sdl-key-t
+						(incf *rotation*)
+						(if (eq *rotation* 5) (setq *rotation* 1))
+						(format t "rotation ~a~%" *rotation*)
+						)
 					(:sdl-key-r
 						(my-restart))
 					(:sdl-key-lshift
@@ -319,7 +474,6 @@
 					)
 					(:sdl-key-escape (sdl:push-quit-event))
 				)
-				(format t "pressed ~a~%" key)
 			)
 			(:key-up-event (:key key)
 				(case key

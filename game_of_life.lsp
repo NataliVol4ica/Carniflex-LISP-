@@ -82,8 +82,10 @@
 				T
 			)
 			(:mouse-button-down-event (:button b)
-				(if (eq b 3)
-					(setf *drag-mode* T)
+				(case b
+					(3 (setf *drag-mode* T))
+					(4 (zoom-in))
+					(5 (zoom-out))						
 				)
 			)
 			(:mouse-button-up-event (:button b)

@@ -21,4 +21,4 @@ testinv2:
 	sbcl --noinform --load game_of_life.lsp 20 text
 
 test1:
-	sbcl --noinform --load game_of_life.lsp 3 3
+	sbcl --noinform --load game_of_life.lsp 100 100

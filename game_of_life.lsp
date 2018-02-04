@@ -13,7 +13,7 @@
 (defvar *drag-mode* nil)
 (defvar *grid*)
 (defvar *todraw-grid* T)
-(defvar *fps* 2)
+(defvar *fps* 128)
 (defvar *ispaused* T)
 
 ;;         ================== CELL CALCULATIONS =================
@@ -37,7 +37,7 @@
 			(setf (aref *grid* i j) 0)
 			)
 	)
-	(format t "~a~%" *grid*)
+	;(format t "~a~%" *grid*)
 )
 
 (defun count_neighbours (x y)
@@ -51,7 +51,7 @@
 		(if (eq (aref *grid* (- x 1)	(+ y 1))	1) (incf ans))
 		(if (eq (aref *grid* x			(+ y 1))	1) (incf ans))
 		(if (eq (aref *grid* (+ x 1)	(+ y 1))	1) (incf ans))
-		(format t "~a ~a : ~a~%"x y ans)
+		;(format t "~a ~a : ~a~%"x y ans)
 		ans
 	)
 )
@@ -71,7 +71,7 @@
 
 (defun calc_life ()
 	(let (new temp)
-		(format t "Grid was~%~a~%" *grid*)
+		;(format t "Grid was~%~a~%" *grid*)
 		(setq new (make-array (list (+ *grid-height* 2) (+ *grid-width* 2))))
 		(dotimes (i (+ *grid-height* 2))
 			(dotimes (j (+ *grid-width* 2))
@@ -87,7 +87,7 @@
 				(setf (aref *grid* i j) (aref new i j))
 			)
 		)
-		(format t "Grid became~%~a~%" *grid*)
+		;(format t "Grid became~%~a~%" *grid*)
 	)
 )
 

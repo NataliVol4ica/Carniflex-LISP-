@@ -5,11 +5,12 @@
 (defvar *window-w* 1024)
 (defvar *window-h* 768)
 
-(defvar *cur-cellsize* 20)
+(defvar *cur-cellsize* 16)
 (defvar *grid-width*)
 (defvar *grid-height*)
 (defvar *field-x* 0) ;move the upper left corner of grid
 (defvar *field-y* 0)
+(defvar *drag-mode* nil)
 
 ;;drawing grid
 (defun draw_grid ()
@@ -18,14 +19,14 @@
 					(+ 0 *field-y*)
 					(+ (* *cur-cellsize* i) *field-x*)
 					(+ (* *cur-cellsize* *grid-height*) *field-y*)
-					:color (sdl:color :r 200 :g 200 :b 200))
+					:color (sdl:color :r 50 :g 50 :b 50))
 	)
 	(loop for i from 0 to *grid-height* by 1 do
 		(sdl:draw-line-* (+ 0 *field-x*)
 					(+ (* *cur-cellsize* i) *field-y*)
 					(+ (* *cur-cellsize* *grid-width*) *field-x*)
 					(+ (* *cur-cellsize* i) *field-y*)
-					:color (sdl:color :r 200 :g 200 :b 200))
+					:color (sdl:color :r 50 :g 50 :b 50))
 	)
 )
 
@@ -40,14 +41,64 @@
 (defun draw ()
 	(sdl:with-init ()
 		(sdl:window *window-w* *window-h* :title-caption "Game of Life")
+		(setf (sdl:frame-rate) 60) 
 		(sdl:with-events ()
 			(:quit-event ()
 				(format t "~%Quitting the program.~%")
 				(exit)
 				T
 			)
+			(:mouse-button-down-event (:button b)
+				(if (eq b 3)
+					(setf *drag-mode* T)
+				)
+			)
+			(:mouse-button-up-event (:button b)
+				(if (eq b 3)
+					(setf *drag-mode* nil)
+				)
+			)
+			(:mouse-motion-event (:x-rel x-rel :y-rel y-rel)
+				(if *drag-mode*
+					(progn
+						;(format t "Mouse moving ~a ~a~%" x-rel y-rel)
+						(setq *field-x* (+ *field-x* x-rel))
+						(setq *field-y* (+ *field-y* y-rel))
+					)
+				)
+			)
 			(:key-down-event (:key key)
 				(case key
+					(:sdl-key-equals
+						(if (< *cur-cellsize* 256)
+							(progn
+								(setq *cur-cellsize* (* *cur-cellsize* 2))
+								(let (half)
+									(setq half (/ *window-w* 2))
+									(setq *field-x* (+ (* (- *field-x* half) 2) half))
+								)
+								(let (half)
+									(setq half (/ *window-h* 2))
+									(setq *field-y* (+ (* (- *field-y* half) 2) half))
+								)
+							)
+						)
+					)
+					(:sdl-key-minus
+						(if (> *cur-cellsize* 2)
+							(progn
+								(setq *cur-cellsize* (/ *cur-cellsize* 2))
+								(let (half)
+									(setq half (/ *window-w* 2))
+									(setq *field-x* (truncate (+ (/ (- *field-x* half) 2) half)))
+								)
+								(let (half)
+									(setq half (/ *window-h* 2))
+									(setq *field-y* (truncate (+ (/ (- *field-y* half) 2) half)))
+								)
+							)
+						)
+					)
 					(:sdl-key-w
 						(if (> (* *cur-cellsize* *grid-height*) *window-h*)
 							(progn

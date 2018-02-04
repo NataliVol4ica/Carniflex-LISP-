@@ -1,4 +1,4 @@
- (let* ((*standard-output* (make-broadcast-stream)) (*error-output* *standard-output*))
+(let* ((*standard-output* (make-broadcast-stream)) (*error-output* *standard-output*))
 	(ql:quickload "lispbuilder-sdl")
 )
 ;;global vars
@@ -49,25 +49,45 @@
 			(:key-down-event (:key key)
 				(case key
 					(:sdl-key-w
-						(setq *field-y* (- *field-y* (/ *cur-cellsize* 2)))
-						(if (< *field-y* 0) (setq *field-y* 0))
+						(if (> (* *cur-cellsize* *grid-height*) *window-h*)
+							(progn
+								(setq *field-y* (- *field-y* (/ *cur-cellsize* 2)))
+								(let (temp)
+									(setq temp (* *cur-cellsize* *grid-height*))
+									(if (< *field-y* (- *window-h* temp))
+										(setq *field-y* (- *window-h* temp))
+									)
+								)
+							)
+						)
 					)
 					(:sdl-key-a
-						(setq *field-x* (- *field-x* (/ *cur-cellsize* 2)))
-						(if (< *field-x* 0) (setq *field-x* 0))
+						(if (> (* *cur-cellsize* *grid-width*) *window-w*)
+							(progn
+								(setq *field-x* (- *field-x* (/ *cur-cellsize* 2)))
+								(let (temp)
+									(setq temp (* *cur-cellsize* *grid-width*))
+									(if (< *field-x* (- *window-w* temp))
+										(setq *field-x* (- *window-w* temp))
+									)
+								)
+							)
+						)
 					)
 					(:sdl-key-s
-						(setq *field-y* (+ *field-y* (/ *cur-cellsize* 2)))
-						(let (temp)
-							(setq temp (- *window-h* (* *cur-cellsize* *grid-height*)))
-							(if (> *field-y* temp) (setq *field-y* (decf temp)))
+						(if (> (* *cur-cellsize* *grid-height*) *window-h*)
+							(progn
+								(setq *field-y* (+ *field-y* (/ *cur-cellsize* 2)))
+								(if (> *field-y* 0) (setq *field-y* 0))
+							)
 						)
 					)
 					(:sdl-key-d
-						(setq *field-x* (+ *field-x* (/ *cur-cellsize* 2)))
-						(let (temp)
-							(setq temp (- *window-w* (* *cur-cellsize* *grid-width*)))
-							(if (> *field-x* temp) (setq *field-x* (decf temp)))
+						(if (> (* *cur-cellsize* *grid-width*) *window-w*)
+							(progn
+								(setq *field-x* (+ *field-x* (/ *cur-cellsize* 2)))
+								(if (> *field-x* 0) (setq *field-x* 0))
+							)
 						)
 					)
 					(:sdl-key-escape (sdl:push-quit-event))
